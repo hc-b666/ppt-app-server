@@ -1,7 +1,11 @@
 import mongoose, { Schema } from "mongoose";
 
 const SlideObjectSchema = new Schema({
-  tool: {
+  id: {
+    type: Number,
+    required: true,
+  },
+  type: {
     type: String,
     required: true,
   },
@@ -21,10 +25,6 @@ const SlideObjectSchema = new Schema({
     type: Number,
     required: true,
   },
-  // slideId: {
-  //   type: String,
-  //   required: true,
-  // }
   roughElement: mongoose.Schema.Types.Mixed,
 });
 

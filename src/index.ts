@@ -23,20 +23,31 @@ const io = new Server(server, {
   cors: corsConfig,
 });
 
+const pptUsers = new Map<string, Set<{ nickname: string, socketId: string }>>();
+
 io.on("connection", (socket) => {
   console.log(`user connected: ${socket.id}`);
 
   socket.on("createPresentation", async (nickname) => {
     try {
-      const newPresentation = new Presentation({
+      const newPpt = new Presentation({
         creator_nickname: nickname,
         users: [],
         slides: [],
       });
-      await newPresentation.save();
+      const newSlide = {
+        objects: [],
+        order: newPpt.slides.length + 1,
+      };
+
+      newPpt.slides.push(newSlide);
+      await newPpt.save();
+
+      pptUsers.set(newPpt._id.toString(), new Set());
+
       socket.emit("presentationCreated", {
         success: true,
-        presentation: newPresentation,
+        presentation: newPpt,
       });
     } catch (err) {
       console.error("Error creating presentation:", err);
@@ -44,7 +55,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("joinPresentation", async (presentationId, nickname) => {
+  socket.on("joinPresentation", async (presentationId: string, nickname: string) => {
     try {
       if (!mongoose.Types.ObjectId.isValid(presentationId)) {
         socket.emit("presentationJoined", {
@@ -63,16 +74,7 @@ io.on("connection", (socket) => {
         });
       }
 
-      let user = ppt?.users.find((u) => u.nickname === nickname);
-
-      if (!user) {
-        const u = {
-          nickname,
-          role: "viewer",
-        };
-        ppt?.users.push(u);
-        await ppt?.save();
-      }
+      pptUsers.get(presentationId)?.add({ nickname, socketId: socket.id });
 
       socket.emit("presentationJoined", { success: true, presentation: ppt });
 
@@ -83,35 +85,39 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("getPresentation", async (presentationId) => {
+  socket.on("getPresentation", async (pptId: string, nickname: string) => {
     try {
-      if (!mongoose.Types.ObjectId.isValid(presentationId)) {
-        socket.emit("presentationJoined", {
+      if (!mongoose.Types.ObjectId.isValid(pptId)) {
+        socket.emit("presentationReceived", {
           success: false,
           error: "Invalid presentation ID",
         });
         return;
       }
-
-      const ppt = await Presentation.findById(presentationId);
+    
+      const ppt = await Presentation.findById(pptId);
 
       if (!ppt) {
-        socket.emit("presentationJoined", {
+        socket.emit("presentationReceived", {
           success: false,
           error: "Presentation not found",
         });
       }
 
-      socket.emit("presentationJoined", { success: true, presentation: ppt });
+      if (ppt?.creator_nickname === nickname.trim()) {
+        socket.emit("presentationReceived", { success: true, presentation: ppt, pptUsers: pptUsers.get(pptId) });
+      } else { 
+        socket.emit("presentationReceived", { success: true, presentation: ppt });
+      }
     } catch (err) {
       console.error("Error getting presentation:", err);
-      socket.emit("presentationJoined", { success: false, error: err });
+      socket.emit("presentationReceived", { success: false, error: err });
     }
   });
 
-  socket.on("addSlide", async (presentationId) => {
+  socket.on("addSlide", async (pptId: string, nickname: string) => {
     try {
-      if (!mongoose.Types.ObjectId.isValid(presentationId)) {
+      if (!mongoose.Types.ObjectId.isValid(pptId)) {
         socket.emit("slideAdded", {
           success: false,
           error: "Invalid presentation ID",
@@ -119,12 +125,20 @@ io.on("connection", (socket) => {
         return;
       }
 
-      const ppt = await Presentation.findById(presentationId);
+      const ppt = await Presentation.findById(pptId);
 
       if (!ppt) {
         socket.emit("slideAdded", {
           success: false,
           error: "Presentation not found",
+        });
+        return;
+      }
+
+      if (ppt.creator_nickname !== nickname) {
+        socket.emit("slideAdded", {
+          success: false,
+          error: "You are not the creator of this presentation",
         });
         return;
       }
@@ -144,49 +158,45 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("addObject", async (presentationId, slideIndex, object) => {
+  socket.on("updateElements", async (pptId: string, currSlide: number, elements) => {
     try {
-      if (!mongoose.Types.ObjectId.isValid(presentationId)) {
-        socket.emit("objectAdded", {
+      if (!mongoose.Types.ObjectId.isValid(pptId)) {
+        socket.emit("elementsUpdated", {
           success: false,
           error: "Invalid presentation ID",
         });
         return;
       }
-
-      const ppt = await Presentation.findById(presentationId);
-
+      
+      const ppt = await Presentation.findById(pptId);
       if (!ppt) {
-        socket.emit("objectAdded", {
+        socket.emit("elementsUpdated", {
           success: false,
           error: "Presentation not found",
         });
         return;
       }
-
-      const slide = ppt.slides.find((s) => s._id.toString() === slideIndex);
-
-      if (!slide) {
-        socket.emit("objectAdded", {
-          success: false,
-          error: "Slide not found",
-        });
-        return;
-      }
-
-      slide.objects.push(object);
+      
+      ppt.slides[currSlide - 1].objects = elements;
 
       await ppt.save();
+      console.log("Elements updated successfully");
 
-      io.emit("objectAdded", { success: true, presentation: ppt });
+      io.to(pptId).emit("elementsUpdated", { success: true, presentation: ppt });
     } catch (err) {
-      console.error("Error adding object:", err);
-      socket.emit("objectAdded", { success: false, error: err });
+      console.error("Error updating elements:", err);
+      socket.emit("elementsUpdated", { success: false, error: err });
     }
   });
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", (pptId: string, nickname: string) => {
     console.log(`user disconnected: ${socket.id}`);
+
+    if (!pptUsers.has(pptId)) {
+      return;
+    }
+
+    pptUsers.get(pptId)?.delete({ nickname, socketId: socket.id });
   });
 });
 
