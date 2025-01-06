@@ -5,6 +5,8 @@ const app_1 = require("./app");
 const socket_1 = require("./socket");
 const app = (0, app_1.createApp)();
 const httpServer = (0, http_1.createServer)(app);
-const io = (0, socket_1.createSocketServer)(httpServer);
+(0, socket_1.createSocketServer)(httpServer);
 const PORT = 3000;
-io.listen(PORT);
+httpServer.listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}`);
+});
