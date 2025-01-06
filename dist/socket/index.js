@@ -6,8 +6,9 @@ const cors_1 = require("../config/cors");
 const createSocketServer = (httpServer) => {
     const io = new socket_io_1.Server(httpServer, {
         cors: cors_1.corsConfig,
-        path: "/socket.io",
-        transports: ["websocket", "polling"],
+        path: "/socket.io/",
+        addTrailingSlash: false,
+        transports: ["polling"],
         allowEIO3: true,
     });
     io.on("connection", (socket) => {

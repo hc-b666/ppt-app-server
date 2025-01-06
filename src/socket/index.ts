@@ -5,8 +5,9 @@ import { corsConfig } from "../config/cors";
 export const createSocketServer = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
     cors: corsConfig,
-    path: "/socket.io",
-    transports: ["websocket", "polling"],
+    path: "/socket.io/",
+    addTrailingSlash: false,
+    transports: ["polling"],
     allowEIO3: true,
   });
 
@@ -16,7 +17,7 @@ export const createSocketServer = (httpServer: HttpServer) => {
     socket.on("disconnect", () => {
       console.log("A user disconnected");
     });
-  });  
+  });
 
   return io;
 };

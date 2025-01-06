@@ -4,5 +4,5 @@ exports.corsConfig = void 0;
 exports.corsConfig = {
     credentials: true,
     origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    methods: ["GET", "POST"],
 };
