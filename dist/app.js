@@ -7,10 +7,15 @@ exports.createApp = void 0;
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const cors_2 = require("./config/cors");
+const error_1 = require("./utils/error");
+const router_1 = __importDefault(require("./router"));
 const createApp = () => {
     const app = (0, express_1.default)();
     app.use(express_1.default.json());
     app.use((0, cors_1.default)(cors_2.corsConfig));
+    app.use("/api", router_1.default);
+    app.use(error_1.endpointNotFound);
+    app.use(error_1.errorMiddleware);
     return app;
 };
 exports.createApp = createApp;
