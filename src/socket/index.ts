@@ -1,6 +1,7 @@
 import { Server, Socket } from "socket.io";
 import { Server as HttpServer } from "http";
 import { corsConfig } from "../config/cors";
+import { userHandler } from "./handlers/user.handler";
 
 export const createSocketServer = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
@@ -11,12 +12,8 @@ export const createSocketServer = (httpServer: HttpServer) => {
     allowEIO3: true,
   });
 
-  io.on("connection", (socket) => {
-    console.log("A user connected");
-
-    socket.on("disconnect", () => {
-      console.log("A user disconnected");
-    });
+  io.on("connection", (socket: Socket) => {
+    userHandler(io, socket);
   });
 
   return io;

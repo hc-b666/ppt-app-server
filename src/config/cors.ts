@@ -1,5 +1,5 @@
 export const corsConfig = {
   credentials: true,
-  origin: "https://ppt-app-client.vercel.app",
+  origin: "http://localhost:8080",
   methods: ["GET", "POST"],
 };
