@@ -20,10 +20,26 @@ class PresentationController {
         this.findAll = (_req, res, next) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const result = yield this.presentationService.findAll();
-                if (!result) {
-                    throw (0, http_errors_1.default)(500, { message: "Could not get presentations" });
+                if (!result.success) {
+                    throw (0, http_errors_1.default)(500, result.error.message);
                 }
-                res.status(200).json(result);
+                res.status(200).json(result.data);
+            }
+            catch (err) {
+                next(err);
+            }
+        });
+        this.findById = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { id } = req.params;
+                if (!id) {
+                    throw (0, http_errors_1.default)(400, "Presentation id is required");
+                }
+                const result = yield this.presentationService.findById(id);
+                if (!result.success) {
+                    throw (0, http_errors_1.default)(500, result.error.message);
+                }
+                res.status(200).json(result.data);
             }
             catch (err) {
                 next(err);
@@ -37,10 +53,8 @@ class PresentationController {
                     throw (0, http_errors_1.default)(400, { message: firstError });
                 }
                 const result = yield this.presentationService.create(requestBody.data);
-                if (!result) {
-                    throw (0, http_errors_1.default)(500, {
-                        message: "Could not create presentation. Try again later",
-                    });
+                if (!result.success) {
+                    throw (0, http_errors_1.default)(500, result.error.message);
                 }
                 res.status(201).json({ message: "Successfully created presentation" });
             }

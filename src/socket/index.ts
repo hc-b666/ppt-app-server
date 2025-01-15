@@ -12,8 +12,14 @@ export const createSocketServer = (httpServer: HttpServer) => {
     allowEIO3: true,
   });
 
-  io.on("connection", (socket: Socket) => {
+  io.on("connect", (socket: Socket) => {
+    console.log("connected", socket.id);
+
     userHandler(io, socket);
+
+    socket.on("disconnect", () => {
+      console.log("disconnected", socket.id);
+    });
   });
 
   return io;

@@ -13,11 +13,29 @@ class PresentationController {
   findAll: RequestHandler = async (_req, res, next) => {
     try {
       const result = await this.presentationService.findAll();
-      if (!result) {
-        throw createHttpError(500, { message: "Could not get presentations" });
+      if (!result.success) {
+        throw createHttpError(500, result.error.message);
       }
 
-      res.status(200).json(result);
+      res.status(200).json(result.data);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  findById: RequestHandler = async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        throw createHttpError(400, "Presentation id is required");
+      }
+
+      const result = await this.presentationService.findById(id);
+      if (!result.success) {
+        throw createHttpError(500, result.error.message);
+      }
+
+      res.status(200).json(result.data);
     } catch (err) {
       next(err);
     }
@@ -32,10 +50,8 @@ class PresentationController {
       }
 
       const result = await this.presentationService.create(requestBody.data);
-      if (!result) {
-        throw createHttpError(500, {
-          message: "Could not create presentation. Try again later",
-        });
+      if (!result.success) {
+        throw createHttpError(500, result.error.message);
       }
 
       res.status(201).json({ message: "Successfully created presentation" });

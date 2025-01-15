@@ -26,12 +26,44 @@ class PresentationService {
     findAll() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const ppts = yield this.prisma.presentation.findMany();
-                return ppts;
+                const ppts = yield this.prisma.presentation.findMany({
+                    orderBy: {
+                        createdAt: "desc",
+                    },
+                });
+                return { success: true, data: ppts };
             }
             catch (err) {
                 console.log("PresentationService.findAll()", err);
-                return false;
+                return {
+                    success: false,
+                    error: err instanceof Error ? err : new Error("Unexpected error occured!"),
+                };
+            }
+        });
+    }
+    findById(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const ppt = yield this.prisma.presentation.findUnique({
+                    where: {
+                        id,
+                    },
+                });
+                if (!ppt) {
+                    return {
+                        success: false,
+                        error: new Error("Presentation not found"),
+                    };
+                }
+                return { success: true, data: ppt };
+            }
+            catch (err) {
+                console.log("Presentation.findById()", err);
+                return {
+                    success: false,
+                    error: err instanceof Error ? err : new Error("Unexpected error occured!"),
+                };
             }
         });
     }
@@ -45,11 +77,14 @@ class PresentationService {
                         description: dto.description,
                     },
                 });
-                return true;
+                return { success: true, data: true };
             }
             catch (err) {
                 console.log("PresentationService.create()", err);
-                return false;
+                return {
+                    success: false,
+                    error: err instanceof Error ? err : new Error("Unexpected error occured"),
+                };
             }
         });
     }

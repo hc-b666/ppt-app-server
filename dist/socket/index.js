@@ -12,8 +12,12 @@ const createSocketServer = (httpServer) => {
         transports: ["polling"],
         allowEIO3: true,
     });
-    io.on("connection", (socket) => {
+    io.on("connect", (socket) => {
+        console.log("connected", socket.id);
         (0, user_handler_1.userHandler)(io, socket);
+        socket.on("disconnect", () => {
+            console.log("disconnected", socket.id);
+        });
     });
     return io;
 };
