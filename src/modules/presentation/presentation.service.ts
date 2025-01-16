@@ -1,7 +1,15 @@
 import { type Presentation } from "@prisma/client";
+import crypto from "crypto";
 import prisma from "../../utils/prisma";
 import { type CreatePresentationDto } from "./dto/create.dto";
 import { type Result } from "../../types/result";
+
+type PresentationWithoutToken = Omit<Presentation, "authorToken">;
+
+interface CreateResponse {
+  presentationId: string;
+  authorToken: string;
+}
 
 class PresentationService {
   private prisma = prisma;
@@ -17,9 +25,42 @@ class PresentationService {
     return this.instance;
   }
 
-  async findAll(): Promise<Result<Presentation[]>> {
+  async isAuthor(authorToken: string, id: string): Promise<Result<boolean>> {
+    try {
+      const ppt = await this.prisma.presentation.findUnique({
+        where: {
+          id,
+          authorToken,
+        },
+      });
+      if (!ppt) {
+        return {
+          success: false,
+          error: new Error("Presentation not found"),
+        };
+      }
+
+      return { success: true, data: true };
+    } catch (err) {
+      console.log("PresentationService.isAuthor()", err);
+      return {
+        success: false,
+        error:
+          err instanceof Error ? err : new Error("Unexpected error occured!"),
+      };
+    }
+  }
+
+  async findAll(): Promise<Result<PresentationWithoutToken[]>> {
     try {
       const ppts = await this.prisma.presentation.findMany({
+        select: {
+          id: true,
+          author: true,
+          title: true,
+          description: true,
+          createdAt: true,
+        },
         orderBy: {
           createdAt: "desc",
         },
@@ -36,9 +77,16 @@ class PresentationService {
     }
   }
 
-  async findById(id: string): Promise<Result<Presentation>> {
+  async findById(id: string): Promise<Result<PresentationWithoutToken>> {
     try {
       const ppt = await this.prisma.presentation.findUnique({
+        select: {
+          id: true,
+          author: true,
+          title: true,
+          description: true,
+          createdAt: true,
+        },
         where: {
           id,
         },
@@ -61,19 +109,59 @@ class PresentationService {
     }
   }
 
-  async create(dto: CreatePresentationDto): Promise<Result<boolean>> {
+  async create(dto: CreatePresentationDto): Promise<Result<CreateResponse>> {
     try {
-      await this.prisma.presentation.create({
+      const authorToken = crypto.randomUUID();
+
+      const ppt = await this.prisma.presentation.create({
         data: {
           author: dto.author,
+          authorToken,
           title: dto.title,
           description: dto.description,
         },
       });
 
-      return { success: true, data: true };
+      return {
+        success: true,
+        data: { presentationId: ppt.id, authorToken },
+      };
     } catch (err) {
       console.log("PresentationService.create()", err);
+      return {
+        success: false,
+        error:
+          err instanceof Error ? err : new Error("Unexpected error occured"),
+      };
+    }
+  }
+
+  async updateTitle(id: string, title: string): Promise<Result<boolean>> {
+    try {
+      const ppt = await this.prisma.presentation.findUnique({
+        where: {
+          id,
+        },
+      });
+      if (!ppt) {
+        return {
+          success: false,
+          error: new Error("Presentation not found"),
+        };
+      }
+
+      await this.prisma.presentation.update({
+        data: {
+          title,
+        },
+        where: {
+          id,
+        },
+      });
+
+      return { success: true, data: true };
+    } catch (err) {
+      console.log("PresentationService.updateTitle()", err);
       return {
         success: false,
         error:
