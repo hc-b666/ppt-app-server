@@ -19,6 +19,26 @@ class PresentationController {
     return id;
   }
 
+  verifyAuthor: RequestHandler = async (req, res, next) => {
+    try {
+      const id = this.validateId(req);
+      const { authorToken } = req.body;
+      if (!authorToken || typeof authorToken !== "string") {
+        throw createHttpError(400, "Author token is required to verify");
+      }
+
+      const result = await this.presentationService.isAuthor(authorToken, id);
+      if (!result.success) {
+        res.status(200).json({ isAuthor: false });
+        return;
+      }
+
+      res.status(200).json({ isAuthor: result.data });
+    } catch (err) {
+      next(err);
+    }
+  };
+
   findAll: RequestHandler = async (_req, res, next) => {
     try {
       const result = await this.presentationService.findAll();

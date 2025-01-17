@@ -6,7 +6,8 @@ const router = Router();
 
 router.get("/", controller.findAll);
 router.get("/:id", controller.findById);
+router.post("/:id/verify-author", controller.verifyAuthor);
 router.post("/create", controller.create);
-router.put("/edit-title/:id", isAuthor, controller.updateTitle);
+router.put("/:id/edit-title", isAuthor, controller.updateTitle);
 
 export default router;

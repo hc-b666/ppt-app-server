@@ -18,6 +18,24 @@ const create_dto_1 = require("./dto/create.dto");
 const updateTitle_1 = require("./dto/updateTitle");
 class PresentationController {
     constructor() {
+        this.verifyAuthor = (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const id = this.validateId(req);
+                const { authorToken } = req.body;
+                if (!authorToken || typeof authorToken !== "string") {
+                    throw (0, http_errors_1.default)(400, "Author token is required to verify");
+                }
+                const result = yield this.presentationService.isAuthor(authorToken, id);
+                if (!result.success) {
+                    res.status(200).json({ isAuthor: false });
+                    return;
+                }
+                res.status(200).json({ isAuthor: result.data });
+            }
+            catch (err) {
+                next(err);
+            }
+        });
         this.findAll = (_req, res, next) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const result = yield this.presentationService.findAll();

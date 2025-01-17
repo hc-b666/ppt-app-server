@@ -9,6 +9,7 @@ const presentation_controller_1 = __importDefault(require("./presentation.contro
 const router = (0, express_1.Router)();
 router.get("/", presentation_controller_1.default.findAll);
 router.get("/:id", presentation_controller_1.default.findById);
+router.post("/:id/verify-author", presentation_controller_1.default.verifyAuthor);
 router.post("/create", presentation_controller_1.default.create);
-router.put("/edit-title/:id", presentation_middleware_1.isAuthor, presentation_controller_1.default.updateTitle);
+router.put("/:id/edit-title", presentation_middleware_1.isAuthor, presentation_controller_1.default.updateTitle);
 exports.default = router;
