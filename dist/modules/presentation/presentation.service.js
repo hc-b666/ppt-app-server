@@ -60,6 +60,7 @@ class PresentationService {
                         title: true,
                         description: true,
                         createdAt: true,
+                        updatedAt: true,
                     },
                     orderBy: {
                         createdAt: "desc",
@@ -86,6 +87,7 @@ class PresentationService {
                         title: true,
                         description: true,
                         createdAt: true,
+                        updatedAt: true,
                     },
                     where: {
                         id,

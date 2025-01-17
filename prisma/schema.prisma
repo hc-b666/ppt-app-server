@@ -17,4 +17,20 @@ model Presentation {
   description String?
 
   createdAt DateTime @default(now())
+  updatedAt DateTime? @updatedAt
+
+  slides Slide[]
+}
+
+model Slide {
+  id String @id @default(uuid())
+
+  presentationId String
+
+  order Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  presentation Presentation @relation(fields: [presentationId], references: [id], onDelete: Cascade)
 }

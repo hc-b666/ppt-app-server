@@ -1,4 +1,4 @@
-import { type Presentation } from "@prisma/client";
+import { type Slide, type Presentation } from "@prisma/client";
 import crypto from "crypto";
 import prisma from "../../utils/prisma";
 import { type CreatePresentationDto } from "./dto/create.dto";
@@ -11,7 +11,15 @@ interface CreateResponse {
   authorToken: string;
 }
 
-class PresentationService {
+interface PresentationServiceInterface {
+  isAuthor(authorToken: string, id: string): Promise<Result<boolean>>;
+  findAll(): Promise<Result<PresentationWithoutToken[]>>;
+  findById(id: string): Promise<Result<PresentationWithoutToken>>;
+  create(dto: CreatePresentationDto): Promise<Result<CreateResponse>>;
+  updateTitle(id: string, title: string): Promise<Result<boolean>>;
+}
+
+class PresentationService implements PresentationServiceInterface {
   private prisma = prisma;
   private static instance: PresentationService;
 
@@ -60,6 +68,7 @@ class PresentationService {
           title: true,
           description: true,
           createdAt: true,
+          updatedAt: true,
         },
         orderBy: {
           createdAt: "desc",
@@ -86,6 +95,7 @@ class PresentationService {
           title: true,
           description: true,
           createdAt: true,
+          updatedAt: true,
         },
         where: {
           id,

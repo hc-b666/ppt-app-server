@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { presentationRoutes } from "./modules/presentation";
+import { slideRoutes } from "./modules/slide";
 
 const router = Router();
 
@@ -8,5 +9,6 @@ router.get("/", (req, res) => {
 });
 
 router.use("/presentations", presentationRoutes);
+router.use("/slides", slideRoutes);
 
 export default router;
